@@ -9,17 +9,11 @@ export default function ArchivesPage() {
   // --- States ---
   const [archives, setArchives] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
   
   // Navigation
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [selectedClassFolder, setSelectedClassFolder] = useState(null);
   
-  // Admin Login Inputs
-  const [adminId, setAdminId] = useState('');
-  const [adminPass, setAdminPass] = useState('');
-
   // Search States
   const [members, setMembers] = useState([]);
   const [searchClass, setSearchClass] = useState('');
@@ -31,7 +25,6 @@ export default function ArchivesPage() {
   const [notification, setNotification] = useState({ show: false, title: '', message: '', type: 'error' });
 
   useEffect(() => {
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -54,19 +47,6 @@ export default function ArchivesPage() {
     });
   }, [members]);
 
-  // --- কাস্টম লগইন হ্যান্ডেলার ---
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (adminId.trim() === 'admin' && adminPass.trim() === '12345') {
-      setIsAdmin(true);
-      localStorage.setItem('isAdmin', 'true');
-      setShowLogin(false);
-      setNotification({ show: true, title: 'Welcome Admin', message: 'System access has been unlocked.', type: 'success' });
-    } else {
-      setNotification({ show: true, title: 'Access Denied', message: 'Invalid Admin ID or Password. Please try again.', type: 'error' });
-    }
-  };
-
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchClass || !searchRoll) {
@@ -88,35 +68,28 @@ export default function ArchivesPage() {
   const classFolders = [...new Set(monthFiltered.map(a => a.class_name))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-3 md:p-12 font-sans select-none">
+    <div className="min-h-screen bg-[#F9FAFB] p-3 md:p-12 font-sans select-none text-slate-800">
       <div className="max-w-6xl mx-auto">
         
-        {/* Header - Simple & Modern */}
+        {/* Header - পাসওয়ার্ড বা লগইন বাটন তুলে দেওয়া হয়েছে */}
         <div className="flex justify-between items-center mb-8 bg-white p-5 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-white">
            <div className="flex items-center gap-4">
               <button 
-                onClick={() => router.back()} 
+                onClick={() => router.push('/')} 
                 className="bg-slate-50 text-slate-500 px-6 py-2.5 rounded-2xl font-black text-[10px] tracking-widest hover:bg-slate-100 transition-all uppercase"
               >
                 BACK
               </button>
               <h1 className="hidden md:block text-xl font-black uppercase tracking-[0.2em] text-slate-800">Storage Vault</h1>
            </div>
-           <div className="flex gap-2">
-              {isAdmin ? (
-                <>
-                  <button onClick={() => router.push('/attendance')} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100">DESK</button>
-                  <button onClick={() => {localStorage.removeItem('isAdmin'); setIsAdmin(false);}} className="bg-rose-50 text-rose-500 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase transition-all">LOGOUT</button>
-                </>
-              ) : (
-                <button onClick={() => setShowLogin(true)} className="bg-slate-100 text-slate-400 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200/50">ADMIN LOGIN 🔒</button>
-              )}
+           <div>
+              <button onClick={() => router.push('/attendance')} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100">ATTENDANCE DESK</button>
            </div>
         </div>
 
-        {/* --- GUARDIAN SEARCH (Full Responsive) --- */}
+        {/* --- STUDENT SEARCH --- */}
         <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-16 mb-12 shadow-2xl shadow-indigo-200 text-white relative overflow-hidden">
-          <div className="relative z-10">
+          <div className="relative z-10 text-left">
             <h2 className="text-3xl md:text-6xl font-black mb-4 tracking-tighter leading-tight">Student Search</h2>
             <p className="text-indigo-100 font-medium mb-10 text-sm md:text-xl opacity-90">View student attendance report for current month.</p>
             <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
@@ -147,7 +120,7 @@ export default function ArchivesPage() {
         {studentResult && (
           <div className="mb-14 bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border-4 border-indigo-50 animate-in slide-in-from-bottom-10">
              <div className="flex justify-between border-b border-slate-100 pb-8 mb-8 items-center">
-                <div>
+                <div className="text-left">
                    <h3 className="text-2xl md:text-5xl font-black text-slate-800 tracking-tight">{studentResult.info.name}</h3>
                    <p className="font-bold text-slate-400 mt-2 uppercase text-xs md:text-sm">Class {studentResult.info.class_name} | Roll {studentResult.info.roll_no}</p>
                 </div>
@@ -165,74 +138,48 @@ export default function ArchivesPage() {
           </div>
         )}
 
-        {/* --- Admin Only Storage Section --- */}
-        {isAdmin && (
-           <div className="animate-in fade-in duration-700">
-             <div className="mb-10 flex flex-wrap gap-2">
-                {months.map(m => (
-                  <button key={m} onClick={() => {setSelectedMonth(m); setSelectedClassFolder(null);}} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedMonth === m ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'bg-white text-slate-400 border border-slate-200'}`}>{m}</button>
-                ))}
-             </div>
+        {/* --- STORAGE SECTION (সবার জন্য উন্মুক্ত করা হয়েছে) --- */}
+        <div className="animate-in fade-in duration-700">
+          <h3 className="text-xl font-black text-slate-800 mb-6 uppercase tracking-widest text-left">Monthly Reports Archive</h3>
+          <div className="mb-10 flex flex-wrap gap-2">
+             {months.map(m => (
+               <button key={m} onClick={() => {setSelectedMonth(m); setSelectedClassFolder(null);}} className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedMonth === m ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'bg-white text-slate-400 border border-slate-200'}`}>{m}</button>
+             ))}
+          </div>
 
-             {!selectedClassFolder ? (
-               <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-10">
-                 {classFolders.map(cls => (
-                   <div key={cls} onClick={() => setSelectedClassFolder(cls)} className="bg-white rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 border-2 border-transparent hover:border-indigo-400 cursor-pointer flex flex-col items-center group transition-all">
-                     <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📂</div>
-                     <h4 className="font-black text-slate-800 text-sm md:text-base uppercase tracking-widest">Class {cls}</h4>
-                     <p className="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-tighter">VIEW REPORTS</p>
+          {!selectedClassFolder ? (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-10">
+              {classFolders.map(cls => (
+                <div key={cls} onClick={() => setSelectedClassFolder(cls)} className="bg-white rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 border-2 border-transparent hover:border-indigo-400 cursor-pointer flex flex-col items-center group transition-all">
+                  <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📂</div>
+                  <h4 className="font-black text-slate-800 text-sm md:text-base uppercase tracking-widest">Class {cls}</h4>
+                  <p className="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-tighter">VIEW REPORTS</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border transition-all">
+               <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b pb-8 gap-4 text-left">
+                  <h3 className="text-xl md:text-3xl font-black text-slate-800 italic tracking-tight uppercase">📁 {selectedMonth} / CLASS {selectedClassFolder}</h3>
+                  <button onClick={() => setSelectedClassFolder(null)} className="text-indigo-600 font-black text-xs uppercase tracking-widest border-2 border-indigo-50 px-8 py-2.5 rounded-2xl hover:bg-indigo-50 transition-all">BACK TO DIRECTORY</button>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {monthFiltered.filter(a => a.class_name === selectedClassFolder).map(f => (
+                   <div key={f.id} className="p-8 rounded-[2.5rem] border-2 border-slate-100 hover:border-indigo-400 bg-slate-50 transition-all flex flex-col justify-between group">
+                     <div className="text-left">
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest mb-4 inline-block ${f.report_type === 'Monthly' ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-600'}`}>{f.report_type}</span>
+                        <h4 className="font-black text-slate-800 text-lg mb-8 leading-tight">{f.file_name}</h4>
+                     </div>
+                     <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] text-center tracking-[0.3em] hover:bg-indigo-600 transition-all uppercase shadow-lg shadow-slate-200 active:scale-95">DOWNLOAD PDF</a>
                    </div>
                  ))}
                </div>
-             ) : (
-               <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl border transition-all">
-                  <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b pb-8 gap-4">
-                     <h3 className="text-xl md:text-3xl font-black text-slate-800 italic tracking-tight uppercase">📁 {selectedMonth} / CLASS {selectedClassFolder}</h3>
-                     <button onClick={() => setSelectedClassFolder(null)} className="text-indigo-600 font-black text-xs uppercase tracking-widest border-2 border-indigo-50 px-8 py-2.5 rounded-2xl hover:bg-indigo-50 transition-all">BACK TO DIRECTORY</button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {monthFiltered.filter(a => a.class_name === selectedClassFolder).map(f => (
-                      <div key={f.id} className="p-8 rounded-[2.5rem] border-2 border-slate-100 hover:border-indigo-400 bg-slate-50 transition-all flex flex-col justify-between group">
-                        <div>
-                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest mb-4 inline-block ${f.report_type === 'Monthly' ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-600'}`}>{f.report_type}</span>
-                           <h4 className="font-black text-slate-800 text-lg mb-8 leading-tight">{f.file_name}</h4>
-                        </div>
-                        <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] text-center tracking-[0.3em] hover:bg-indigo-600 transition-all uppercase shadow-lg shadow-slate-200 active:scale-95">DOWNLOAD PDF</a>
-                      </div>
-                    ))}
-                  </div>
-               </div>
-             )}
-           </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* --- UNIQUE CUSTOM MODALS (English Only) --- */}
-      
-      {/* Admin Login Modal */}
-      {showLogin && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 z-[300]">
-           <div className="bg-white p-10 md:p-14 rounded-[4rem] text-center max-w-sm w-full shadow-2xl border-t-[15px] border-indigo-600 animate-in zoom-in-95">
-              <h4 className="text-3xl font-black text-slate-800 mb-10 tracking-tighter uppercase">Security Portal</h4>
-              <form onSubmit={handleLogin} className="flex flex-col gap-5">
-                 <input 
-                   type="text" placeholder="ADMIN ID" 
-                   value={adminId} onChange={e => setAdminId(e.target.value)}
-                   className="bg-slate-50 p-5 rounded-3xl font-black outline-none border-2 focus:border-indigo-600 transition-all text-sm uppercase" required 
-                 />
-                 <input 
-                   type="password" placeholder="PASSWORD" 
-                   value={adminPass} onChange={e => setAdminPass(e.target.value)}
-                   className="bg-slate-50 p-5 rounded-3xl font-black outline-none border-2 focus:border-indigo-600 transition-all text-sm" required 
-                 />
-                 <button type="submit" className="bg-indigo-600 text-white py-5 rounded-[2rem] font-black text-xs shadow-2xl mt-4 active:scale-95 transition-all tracking-[0.3em] uppercase">UNLOCK ACCESS</button>
-                 <button type="button" onClick={() => setShowLogin(false)} className="text-slate-300 font-bold text-[10px] uppercase tracking-widest mt-6 hover:text-slate-500">DISMISS</button>
-              </form>
-           </div>
-        </div>
-      )}
-
-      {/* General Notification Modal (Replacing Alerts) */}
+      {/* General Notification Modal */}
       {notification.show && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 z-[400]">
            <div className="bg-white p-10 md:p-14 rounded-[3.5rem] text-center max-w-sm w-full shadow-2xl border-b-[12px] border-slate-100 animate-in zoom-in-95">
